@@ -4,7 +4,18 @@ require('dotenv').config();
 
 app.use(express.json());
 
-// Import and use your routes here
-// Example: app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/patients', require('./routes/patientRoutes'));
+app.use('/api/doctors', require('./routes/doctorRoutes'));
+app.use('/api/specialties', require('./routes/specialtyRoutes'));
+app.use('/api/payment-methods', require('./routes/paymentMethodRoutes'));
+app.use('/api/schedules', require('./routes/scheduleRoutes'));
+app.use('/api/doctor-schedules', require('./routes/doctorScheduleRoutes'));
+app.use(
+  '/api/doctor-payment-methods',
+  require('./routes/doctorPaymentMethodRoutes')
+);
+app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 
 module.exports = app;
