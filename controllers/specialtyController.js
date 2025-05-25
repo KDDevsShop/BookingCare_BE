@@ -5,13 +5,13 @@ const fs = require('fs');
 // Create a new specialty
 const createSpecialty = async (req, res) => {
   try {
-    const { speciltyName, specialtyDesc } = req.body;
+    const { specialtyName, specialtyDesc } = req.body;
     let specialtyImage = null;
     if (req.file) {
       specialtyImage = `/images/${req.file.filename}`;
     }
     const specialty = await Specialty.create({
-      speciltyName,
+      specialtyName,
       specialtyImage,
       specialtyDesc,
     });

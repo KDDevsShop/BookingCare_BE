@@ -16,6 +16,8 @@ const signup = async (req, res) => {
       userAddress = '',
       accountStatus = true,
       isAdmin = false,
+      patientName,
+      patientPhone,
     } = req.body;
     const existingAccount = await Account.findOne({ where: { username } });
 
@@ -44,9 +46,21 @@ const signup = async (req, res) => {
       accountStatus,
       isAdmin: isAdmin || false,
     });
+    let patient = null;
+    if (!account.isAdmin) {
+      if (!patientName || !patientPhone) {
+        return res.status(400).json({ message: 'Missing patient information' });
+      }
+      patient = await Patient.create({
+        patientName,
+        patientPhone,
+        patientEmail: email,
+        accountId: account.id,
+      });
+    }
     return res
       .status(201)
-      .json({ message: 'Account created successfully', account });
+      .json({ message: 'Account created successfully', account, patient });
   } catch (error) {
     return res
       .status(500)
