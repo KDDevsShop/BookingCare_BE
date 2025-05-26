@@ -1,5 +1,6 @@
 const { Doctor, Account, Specialty, PaymentMethod } = require('../models');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const fs = require('fs');
 
 // Create a new doctor and associated account
@@ -23,10 +24,11 @@ const createDoctor = async (req, res) => {
     if (req.file) {
       userAvatar = `/images/${req.file.filename}`;
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
     // Create account
     const account = await Account.create({
       username,
-      password, // Should be hashed in production
+      password: hashedPassword,
       userGender,
       userDoB,
       userAddress,
@@ -43,11 +45,20 @@ const createDoctor = async (req, res) => {
       specialtyId,
     });
     // Associate payment methods if provided
-    if (paymentMethodIds && Array.isArray(paymentMethodIds)) {
-      await doctor.setPaymentMethods(paymentMethodIds);
+    let paymentIds = paymentMethodIds;
+    if (paymentIds) {
+      if (typeof paymentIds === 'string') {
+        // Handle comma-separated or single value
+        paymentIds = paymentIds.split(',').map((id) => id.trim());
+      }
+      if (!Array.isArray(paymentIds)) {
+        paymentIds = [paymentIds];
+      }
+      await doctor.setPaymentMethods(paymentIds);
     }
     return res.status(201).json({ message: 'Doctor created', doctor, account });
   } catch (error) {
+    console.error('[ERR] Error creating doctor:', error);
     return res
       .status(500)
       .json({ message: 'Create doctor failed', error: error.message });
@@ -57,17 +68,7 @@ const createDoctor = async (req, res) => {
 // Get all doctors
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await Doctor.findAll({
-      include: [
-        { model: Account, as: 'account' },
-        { model: Specialty, as: 'specialty' },
-        {
-          model: PaymentMethod,
-          as: 'paymentMethods',
-          through: { attributes: [] },
-        },
-      ],
-    });
+    const doctors = await Doctor.findAll();
     return res.status(200).json(doctors);
   } catch (error) {
     return res
@@ -82,14 +83,35 @@ const getDoctorById = async (req, res) => {
     const { id } = req.params;
     const doctor = await Doctor.findByPk(id, {
       include: [
-        { model: Account, as: 'account' },
-        { model: Specialty, as: 'specialty' },
+        {
+          model: Account,
+          as: 'account',
+          attributes: {
+            exclude: [
+              'id',
+              'username',
+              'password',
+              'createdAt',
+              'updatedAt',
+              'resetToken',
+              'resetTokenExpire',
+              'isAdmin',
+            ],
+          },
+        },
+        {
+          model: Specialty,
+          as: 'specialty',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
         {
           model: PaymentMethod,
           as: 'paymentMethods',
           through: { attributes: [] },
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ],
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
     });
     if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
     return res.status(200).json(doctor);
@@ -111,11 +133,9 @@ const updateDoctor = async (req, res) => {
       examinationPrice,
       specialtyId,
       paymentMethodIds,
-      username,
       userGender,
       userDoB,
       userAddress,
-      email,
     } = req.body;
     const doctor = await Doctor.findByPk(id, {
       include: [{ model: Account, as: 'account' }],
@@ -129,18 +149,22 @@ const updateDoctor = async (req, res) => {
     doctor.specialtyId = specialtyId || doctor.specialtyId;
     await doctor.save();
     // Update payment methods
-    if (paymentMethodIds && Array.isArray(paymentMethodIds)) {
-      await doctor.setPaymentMethods(paymentMethodIds);
+    let updatePaymentIds = paymentMethodIds;
+    if (updatePaymentIds) {
+      if (typeof updatePaymentIds === 'string') {
+        updatePaymentIds = updatePaymentIds.split(',').map((id) => id.trim());
+      }
+      if (!Array.isArray(updatePaymentIds)) {
+        updatePaymentIds = [updatePaymentIds];
+      }
+      await doctor.setPaymentMethods(updatePaymentIds);
     }
     // Update account fields
     if (doctor.account) {
-      doctor.account.username = username || doctor.account.username;
       doctor.account.userGender = userGender || doctor.account.userGender;
       doctor.account.userDoB = userDoB || doctor.account.userDoB;
       doctor.account.userAddress = userAddress || doctor.account.userAddress;
-      doctor.account.email = email || doctor.account.email;
       if (req.file) {
-        // Remove old avatar if exists
         if (doctor.account.userAvatar) {
           const oldPath = path.join(__dirname, '..', doctor.account.userAvatar);
           if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);

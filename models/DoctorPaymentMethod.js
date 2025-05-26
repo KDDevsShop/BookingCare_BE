@@ -27,5 +27,18 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
+  DoctorPaymentMethod.associate = (models) => {
+    DoctorPaymentMethod.belongsTo(models.Doctor, {
+      foreignKey: 'doctorId',
+      as: 'doctor',
+      onDelete: 'CASCADE',
+    });
+    DoctorPaymentMethod.belongsTo(models.PaymentMethod, {
+      foreignKey: 'paymentMethodId',
+      as: 'paymentMethod',
+      onDelete: 'CASCADE',
+    });
+  };
+
   return DoctorPaymentMethod;
 };

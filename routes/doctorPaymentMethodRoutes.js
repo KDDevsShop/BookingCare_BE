@@ -5,6 +5,9 @@ const doctorPaymentMethodController = require('../controllers/doctorPaymentMetho
 router.post('/', doctorPaymentMethodController.createDoctorPaymentMethod);
 router.get('/', doctorPaymentMethodController.getAllDoctorPaymentMethods);
 router.get('/:id', doctorPaymentMethodController.getDoctorPaymentMethodById);
-router.delete('/:id', doctorPaymentMethodController.deleteDoctorPaymentMethod);
+router.delete(
+  '/:doctorId/:paymentMethodId',
+  doctorPaymentMethodController.deleteDoctorPaymentMethod
+);
 
 module.exports = router;
