@@ -12,6 +12,7 @@ const shouldAlter = process.env.DB_SYNC_ALTER === 'true';
     await createDatabase(); // Ensure the database exists
     if (shouldAlter) {
       await db.sequelize.sync({ alter: true }); // Only alter if env is set
+      await require('./seed').seedAll();
     } else {
       await db.sequelize.sync(); // Safe sync
     }

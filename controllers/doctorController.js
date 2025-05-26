@@ -1,4 +1,11 @@
-const { Doctor, Account, Specialty, PaymentMethod } = require('../models');
+const {
+  Doctor,
+  Account,
+  Specialty,
+  PaymentMethod,
+  DoctorSchedule,
+  Schedule,
+} = require('../models');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
@@ -109,6 +116,18 @@ const getDoctorById = async (req, res) => {
           as: 'paymentMethods',
           through: { attributes: [] },
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: DoctorSchedule,
+          as: 'doctorSchedules',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: Schedule,
+              as: 'schedule',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
         },
       ],
       attributes: { exclude: ['createdAt', 'updatedAt'] },

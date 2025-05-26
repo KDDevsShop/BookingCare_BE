@@ -3,7 +3,16 @@ module.exports = (sequelize, DataTypes) => {
     workDate: {
       type: DataTypes.DATEONLY,
       allowNull: false,
-      unique: 'doctor_schedule_unique', // Unique per doctor
+    },
+    currentPatients: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    isAvailable: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
   });
 

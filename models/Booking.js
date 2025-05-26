@@ -20,6 +20,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
+    bookingStatus: {
+      type: DataTypes.ENUM(
+        'Chờ xác nhận',
+        'Đã xác nhận',
+        'Đã hủy',
+        'Đã hoàn thành'
+      ),
+      allowNull: false,
+      defaultValue: 'Chờ xác nhận',
+    },
   });
 
   Booking.associate = (models) => {
