@@ -36,16 +36,8 @@ const getPatientById = async (req, res) => {
 const updatePatient = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      patientName,
-      patientPhone,
-      patientEmail,
-      username,
-      userGender,
-      userDoB,
-      userAddress,
-      email,
-    } = req.body;
+    const { patientName, patientPhone, userGender, userDoB, userAddress } =
+      req.body;
     const patient = await Patient.findByPk(id, {
       include: [{ model: Account, as: 'account' }],
     });
@@ -53,15 +45,12 @@ const updatePatient = async (req, res) => {
     // Update patient fields
     patient.patientName = patientName || patient.patientName;
     patient.patientPhone = patientPhone || patient.patientPhone;
-    patient.patientEmail = patientEmail || patient.patientEmail;
     await patient.save();
     // Update account fields
     if (patient.account) {
-      patient.account.username = username || patient.account.username;
       patient.account.userGender = userGender || patient.account.userGender;
       patient.account.userDoB = userDoB || patient.account.userDoB;
       patient.account.userAddress = userAddress || patient.account.userAddress;
-      patient.account.email = email || patient.account.email;
       if (req.file) {
         // Remove old avatar if exists
         if (patient.account.userAvatar) {
@@ -80,7 +69,10 @@ const updatePatient = async (req, res) => {
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Update patient failed', error: error.message });
+      .json({
+        message: 'Update patient failed',
+        error: error?.message || error,
+      });
   }
 };
 
