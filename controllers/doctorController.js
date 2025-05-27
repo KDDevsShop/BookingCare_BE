@@ -85,8 +85,6 @@ const getAllDoctors = async (req, res) => {
           as: 'account',
           attributes: {
             exclude: [
-              'id',
-              'username',
               'password',
               'createdAt',
               'updatedAt',
@@ -140,8 +138,6 @@ const getDoctorById = async (req, res) => {
           as: 'account',
           attributes: {
             exclude: [
-              'id',
-              'username',
               'password',
               'createdAt',
               'updatedAt',
