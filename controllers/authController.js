@@ -76,7 +76,13 @@ const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const account = await Account.findOne({ where: { username } });
+    const account = await Account.findOne({
+      where: { username },
+      include: [
+        { model: Patient, as: 'patient' },
+        { model: Doctor, as: 'doctor' },
+      ],
+    });
 
     if (!account) {
       return res.status(400).json({ message: 'Invalid username or password' });
@@ -100,9 +106,30 @@ const login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    // Remove sensitive/unnecessary fields from account before returning
+    const accountData = account.toJSON();
+    delete accountData.password;
+    delete accountData.resetToken;
+    delete accountData.resetTokenExpire;
+    delete accountData.accountStatus;
+    delete accountData.createdAt;
+    delete accountData.updatedAt;
+
+    if (accountData.patient) {
+      delete accountData.patient.createdAt;
+      delete accountData.patient.updatedAt;
+      delete accountData.patient.accountId;
+    }
+
+    if (accountData.doctor) {
+      delete accountData.doctor.createdAt;
+      delete accountData.doctor.updatedAt;
+      delete accountData.doctor.accountId;
+    }
+
     return res
       .status(200)
-      .json({ message: 'Login successful', token, account });
+      .json({ message: 'Login successful', token, account: accountData });
   } catch (error) {
     return res
       .status(500)
