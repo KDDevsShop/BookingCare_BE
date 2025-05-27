@@ -15,7 +15,7 @@ const signup = async (req, res) => {
       userGender,
       userAddress = '',
       accountStatus = true,
-      isAdmin = false,
+      role = 'patient',
       patientName,
       patientPhone,
     } = req.body;
@@ -44,13 +44,16 @@ const signup = async (req, res) => {
       userDoB,
       userAddress,
       accountStatus,
-      isAdmin: isAdmin || false,
+      role,
     });
+
     let patient = null;
-    if (!account.isAdmin) {
+
+    if (role === 'patient') {
       if (!patientName || !patientPhone) {
         return res.status(400).json({ message: 'Missing patient information' });
       }
+
       patient = await Patient.create({
         patientName,
         patientPhone,
@@ -58,6 +61,7 @@ const signup = async (req, res) => {
         accountId: account.id,
       });
     }
+
     return res
       .status(201)
       .json({ message: 'Account created successfully', account, patient });
@@ -71,24 +75,31 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+
     const account = await Account.findOne({ where: { username } });
+
     if (!account) {
       return res.status(400).json({ message: 'Invalid username or password' });
     }
+
     if (account.accountStatus === false) {
       return res.status(403).json({
         message: 'This account has been blocked. Please contact support.',
       });
     }
+
     const isMatch = await bcrypt.compare(password, account.password);
+
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid username or password' });
     }
+
     const token = jwt.sign(
-      { id: account.id, isAdmin: account.isAdmin },
+      { id: account.id, role: account.role },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '1d' }
     );
+
     return res
       .status(200)
       .json({ message: 'Login successful', token, account });

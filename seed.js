@@ -10,7 +10,7 @@ async function seedAccounts() {
       userDoB: '1980-01-01',
       userAddress: 'Hà Nội',
       email: 'bacsi1@benhvien.vn',
-      isAdmin: false,
+      role: 'doctor',
     },
     {
       username: 'bacsi2',
@@ -19,7 +19,7 @@ async function seedAccounts() {
       userDoB: '1985-02-02',
       userAddress: 'Hồ Chí Minh',
       email: 'bacsi2@benhvien.vn',
-      isAdmin: false,
+      role: 'doctor',
     },
     {
       username: 'benhnhan1',
@@ -28,7 +28,7 @@ async function seedAccounts() {
       userDoB: '1995-03-03',
       userAddress: 'Đà Nẵng',
       email: 'benhnhan1@benhvien.vn',
-      isAdmin: false,
+      role: 'patient',
     },
     {
       username: 'benhnhan2',
@@ -37,7 +37,7 @@ async function seedAccounts() {
       userDoB: '1990-04-04',
       userAddress: 'Cần Thơ',
       email: 'benhnhan2@benhvien.vn',
-      isAdmin: false,
+      role: 'patient',
     },
     {
       username: 'admin',
@@ -46,7 +46,7 @@ async function seedAccounts() {
       userDoB: '1970-05-05',
       userAddress: 'Hà Nội',
       email: 'admin@benhvien.vn',
-      isAdmin: true,
+      role: 'admin',
     },
   ];
   return db.Account.bulkCreate(accounts);

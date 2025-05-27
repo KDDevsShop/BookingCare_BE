@@ -27,10 +27,13 @@ const createDoctor = async (req, res) => {
       specialtyId,
       paymentMethodIds,
     } = req.body;
+
     let userAvatar = null;
+
     if (req.file) {
       userAvatar = `/images/${req.file.filename}`;
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     // Create account
     const account = await Account.create({
@@ -75,7 +78,49 @@ const createDoctor = async (req, res) => {
 // Get all doctors
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await Doctor.findAll();
+    const doctors = await Doctor.findAll({
+      include: [
+        {
+          model: Account,
+          as: 'account',
+          attributes: {
+            exclude: [
+              'id',
+              'username',
+              'password',
+              'createdAt',
+              'updatedAt',
+              'resetToken',
+              'resetTokenExpire',
+            ],
+          },
+        },
+        {
+          model: Specialty,
+          as: 'specialty',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: PaymentMethod,
+          as: 'paymentMethods',
+          through: { attributes: [] },
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: DoctorSchedule,
+          as: 'doctorSchedules',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: Schedule,
+              as: 'schedule',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+      ],
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
+    });
     return res.status(200).json(doctors);
   } catch (error) {
     return res
@@ -102,7 +147,6 @@ const getDoctorById = async (req, res) => {
               'updatedAt',
               'resetToken',
               'resetTokenExpire',
-              'isAdmin',
             ],
           },
         },

@@ -20,6 +20,7 @@ app.use(
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 app.use('/api/faqs', require('./routes/faqRoutes'));
+app.use('/api/statistics', require('./routes/statisticRoutes'));
 app.use('/images', express.static('images'));
 
 module.exports = app;
