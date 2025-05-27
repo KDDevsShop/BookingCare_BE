@@ -5,10 +5,10 @@ const {
   PaymentMethod,
   DoctorSchedule,
   Schedule,
-} = require('../models');
-const path = require('path');
-const bcrypt = require('bcrypt');
-const fs = require('fs');
+} = require("../models");
+const path = require("path");
+const bcrypt = require("bcrypt");
+const fs = require("fs");
 
 // Create a new doctor and associated account
 const createDoctor = async (req, res) => {
@@ -44,6 +44,7 @@ const createDoctor = async (req, res) => {
       userAddress,
       userAvatar,
       email,
+      role: "doctor",
     });
     // Create doctor
     const doctor = await Doctor.create({
@@ -57,21 +58,21 @@ const createDoctor = async (req, res) => {
     // Associate payment methods if provided
     let paymentIds = paymentMethodIds;
     if (paymentIds) {
-      if (typeof paymentIds === 'string') {
+      if (typeof paymentIds === "string") {
         // Handle comma-separated or single value
-        paymentIds = paymentIds.split(',').map((id) => id.trim());
+        paymentIds = paymentIds.split(",").map((id) => id.trim());
       }
       if (!Array.isArray(paymentIds)) {
         paymentIds = [paymentIds];
       }
       await doctor.setPaymentMethods(paymentIds);
     }
-    return res.status(201).json({ message: 'Doctor created', doctor, account });
+    return res.status(201).json({ message: "Doctor created", doctor, account });
   } catch (error) {
-    console.error('[ERR] Error creating doctor:', error);
+    console.error("[ERR] Error creating doctor:", error);
     return res
       .status(500)
-      .json({ message: 'Create doctor failed', error: error.message });
+      .json({ message: "Create doctor failed", error: error.message });
   }
 };
 
@@ -82,48 +83,48 @@ const getAllDoctors = async (req, res) => {
       include: [
         {
           model: Account,
-          as: 'account',
+          as: "account",
           attributes: {
             exclude: [
-              'password',
-              'createdAt',
-              'updatedAt',
-              'resetToken',
-              'resetTokenExpire',
+              "password",
+              "createdAt",
+              "updatedAt",
+              "resetToken",
+              "resetTokenExpire",
             ],
           },
         },
         {
           model: Specialty,
-          as: 'specialty',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          as: "specialty",
+          attributes: { exclude: ["createdAt", "updatedAt"] },
         },
         {
           model: PaymentMethod,
-          as: 'paymentMethods',
+          as: "paymentMethods",
           through: { attributes: [] },
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          attributes: { exclude: ["createdAt", "updatedAt"] },
         },
         {
           model: DoctorSchedule,
-          as: 'doctorSchedules',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          as: "doctorSchedules",
+          attributes: { exclude: ["createdAt", "updatedAt"] },
           include: [
             {
               model: Schedule,
-              as: 'schedule',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
+              as: "schedule",
+              attributes: { exclude: ["createdAt", "updatedAt"] },
             },
           ],
         },
       ],
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
+      attributes: { exclude: ["createdAt", "updatedAt"] },
     });
     return res.status(200).json(doctors);
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Get doctors failed', error: error.message });
+      .json({ message: "Get doctors failed", error: error.message });
   }
 };
 
@@ -135,49 +136,49 @@ const getDoctorById = async (req, res) => {
       include: [
         {
           model: Account,
-          as: 'account',
+          as: "account",
           attributes: {
             exclude: [
-              'password',
-              'createdAt',
-              'updatedAt',
-              'resetToken',
-              'resetTokenExpire',
+              "password",
+              "createdAt",
+              "updatedAt",
+              "resetToken",
+              "resetTokenExpire",
             ],
           },
         },
         {
           model: Specialty,
-          as: 'specialty',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          as: "specialty",
+          attributes: { exclude: ["createdAt", "updatedAt"] },
         },
         {
           model: PaymentMethod,
-          as: 'paymentMethods',
+          as: "paymentMethods",
           through: { attributes: [] },
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          attributes: { exclude: ["createdAt", "updatedAt"] },
         },
         {
           model: DoctorSchedule,
-          as: 'doctorSchedules',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          as: "doctorSchedules",
+          attributes: { exclude: ["createdAt", "updatedAt"] },
           include: [
             {
               model: Schedule,
-              as: 'schedule',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
+              as: "schedule",
+              attributes: { exclude: ["createdAt", "updatedAt"] },
             },
           ],
         },
       ],
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
+      attributes: { exclude: ["createdAt", "updatedAt"] },
     });
-    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
     return res.status(200).json(doctor);
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Get doctor failed', error: error.message });
+      .json({ message: "Get doctor failed", error: error.message });
   }
 };
 
@@ -197,9 +198,9 @@ const updateDoctor = async (req, res) => {
       userAddress,
     } = req.body;
     const doctor = await Doctor.findByPk(id, {
-      include: [{ model: Account, as: 'account' }],
+      include: [{ model: Account, as: "account" }],
     });
-    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
     // Update doctor fields
     doctor.doctorName = doctorName || doctor.doctorName;
     doctor.doctorSortDesc = doctorSortDesc || doctor.doctorSortDesc;
@@ -210,8 +211,8 @@ const updateDoctor = async (req, res) => {
     // Update payment methods
     let updatePaymentIds = paymentMethodIds;
     if (updatePaymentIds) {
-      if (typeof updatePaymentIds === 'string') {
-        updatePaymentIds = updatePaymentIds.split(',').map((id) => id.trim());
+      if (typeof updatePaymentIds === "string") {
+        updatePaymentIds = updatePaymentIds.split(",").map((id) => id.trim());
       }
       if (!Array.isArray(updatePaymentIds)) {
         updatePaymentIds = [updatePaymentIds];
@@ -225,18 +226,18 @@ const updateDoctor = async (req, res) => {
       doctor.account.userAddress = userAddress || doctor.account.userAddress;
       if (req.file) {
         if (doctor.account.userAvatar) {
-          const oldPath = path.join(__dirname, '..', doctor.account.userAvatar);
+          const oldPath = path.join(__dirname, "..", doctor.account.userAvatar);
           if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }
         doctor.account.userAvatar = `/images/${req.file.filename}`;
       }
       await doctor.account.save();
     }
-    return res.status(200).json({ message: 'Doctor updated', doctor });
+    return res.status(200).json({ message: "Doctor updated", doctor });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Update doctor failed', error: error.message });
+      .json({ message: "Update doctor failed", error: error.message });
   }
 };
 
@@ -245,16 +246,16 @@ const deleteDoctor = async (req, res) => {
   try {
     const { id } = req.params;
     const doctor = await Doctor.findByPk(id, {
-      include: [{ model: Account, as: 'account' }],
+      include: [{ model: Account, as: "account" }],
     });
-    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
     if (doctor.account) await doctor.account.destroy();
     await doctor.destroy();
-    return res.status(200).json({ message: 'Doctor deleted' });
+    return res.status(200).json({ message: "Doctor deleted" });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Delete doctor failed', error: error.message });
+      .json({ message: "Delete doctor failed", error: error.message });
   }
 };
 
