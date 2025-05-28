@@ -105,9 +105,14 @@ const getDoctorRevenueStatistics = async (req, res) => {
         [Op.between]: [start, end],
       };
     }
-    // Get all doctors
+    // Get all doctors (include userAvatar)
     const doctors = await Doctor.findAll({
-      attributes: ['id', 'doctorName'],
+      attributes: ['id', 'doctorName', 'accountId'],
+      raw: true,
+    });
+    // Get all accounts for doctor avatars
+    const accounts = await require('../models').Account.findAll({
+      attributes: ['id', 'userAvatar'],
       raw: true,
     });
     // Get revenue and total complete bookings for each doctor
@@ -130,9 +135,11 @@ const getDoctorRevenueStatistics = async (req, res) => {
     // Merge all doctors with stats, fill 0 if not found
     const result = doctors.map((doc) => {
       const stat = doctorStats.find((s) => s.doctorId === doc.id);
+      const account = accounts.find((a) => a.id === doc.accountId);
       return {
         doctorId: doc.id,
         doctorName: doc.doctorName,
+        avatar: account ? account.userAvatar : null,
         revenue: stat ? Number(stat.revenue) : 0,
         totalCompleteBookings: stat ? Number(stat.totalCompleteBookings) : 0,
       };
@@ -198,7 +205,6 @@ const getAllDoctors = async (req, res) => {
   }
 };
 
-// GET /api/statistics/top-vip-patients?year=YYYY&month=MM
 const getTopVipPatients = async (req, res) => {
   try {
     let { year, month } = req.query;
@@ -206,7 +212,7 @@ const getTopVipPatients = async (req, res) => {
     if (!year && !month) {
       year = now.getFullYear();
     }
-    const { Patient } = require('../models');
+    const { Patient, Account } = require('../models');
     let where = { bookingStatus: 'Đã hoàn thành' };
     if (year && !month) {
       where.bookingDate = {
@@ -220,9 +226,14 @@ const getTopVipPatients = async (req, res) => {
         [Op.between]: [start, end],
       };
     }
-    // Get all patients
+    // Get all patients (include accountId)
     const patients = await Patient.findAll({
-      attributes: ['id', 'patientName'],
+      attributes: ['id', 'patientName', 'accountId'],
+      raw: true,
+    });
+    // Get all accounts for patient avatars
+    const accounts = await Account.findAll({
+      attributes: ['id', 'userAvatar'],
       raw: true,
     });
     // Get total amount for each patient
@@ -241,9 +252,11 @@ const getTopVipPatients = async (req, res) => {
     // Merge all patients with stats, fill 0 if not found
     const result = patients.map((pat) => {
       const stat = patientStats.find((s) => s.patientId === pat.id);
+      const account = accounts.find((a) => a.id === pat.accountId);
       return {
         patientId: pat.id,
         patientName: pat.patientName,
+        avatar: account ? account.userAvatar : null,
         totalAmount: stat ? Number(stat.totalAmount) : 0,
       };
     });
