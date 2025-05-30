@@ -49,8 +49,7 @@ const getSpecialtyById = async (req, res) => {
           as: 'doctors',
           include: [
             {
-              model: Account,
-              as: 'account',
+              association: 'account',
               attributes: {
                 exclude: [
                   'password',
@@ -65,8 +64,10 @@ const getSpecialtyById = async (req, res) => {
         },
       ],
     });
+
     if (!specialty)
       return res.status(404).json({ message: 'Specialty not found' });
+
     return res.status(200).json(specialty);
   } catch (error) {
     return res
