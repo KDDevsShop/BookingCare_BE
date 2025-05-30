@@ -6,6 +6,7 @@ const {
   DoctorSchedule,
   Schedule,
 } = require('../models');
+const Account = require('../models/Account');
 
 // Create a new booking
 const createBooking = async (req, res) => {
