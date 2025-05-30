@@ -260,6 +260,60 @@ const cancelBooking = async (req, res) => {
   }
 };
 
+// Get all bookings for a doctor by doctorId
+const getDoctorBookings = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    if (!doctorId) {
+      return res.status(400).json({ message: 'doctorId is required' });
+    }
+    const bookings = await Booking.findAll({
+      where: { doctorId },
+      include: [
+        { model: Patient, as: 'patient', attributes: ['id', 'patientName'] },
+        { model: Prescription, as: 'prescription' },
+      ],
+      order: [
+        ['bookingDate', 'DESC'],
+        ['bookingStartTime', 'DESC'],
+      ],
+    });
+    return res.status(200).json(bookings);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Get doctor bookings failed',
+      error: error.message,
+    });
+  }
+};
+
+// Get all bookings for a patient by patientId (duplicate of getPatientBookingHistories for route consistency)
+const getPatientBookings = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    if (!patientId) {
+      return res.status(400).json({ message: 'patientId is required' });
+    }
+    const bookings = await Booking.findAll({
+      where: { patientId },
+      include: [
+        { model: Doctor, as: 'doctor', attributes: ['id', 'doctorName'] },
+        { model: Prescription, as: 'prescription' },
+      ],
+      order: [
+        ['bookingDate', 'DESC'],
+        ['bookingStartTime', 'DESC'],
+      ],
+    });
+    return res.status(200).json(bookings);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Get patient bookings failed',
+      error: error.message,
+    });
+  }
+};
+
 // Get all bookings for a patient by patientId
 const getPatientBookingHistories = async (req, res) => {
   try {
@@ -295,4 +349,6 @@ module.exports = {
   deleteBooking,
   cancelBooking,
   getPatientBookingHistories,
+  getDoctorBookings,
+  getPatientBookings,
 };

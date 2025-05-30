@@ -12,5 +12,6 @@ router.get(
   '/patient/:patientId/histories',
   bookingController.getPatientBookingHistories
 );
+router.get('/doctor/:doctorId', bookingController.getDoctorBookings);
 
 module.exports = router;
