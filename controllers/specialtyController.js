@@ -1,6 +1,7 @@
 const { Specialty, Doctor } = require('../models');
 const path = require('path');
 const fs = require('fs');
+const Account = require('../models/Account');
 
 // Create a new specialty
 const createSpecialty = async (req, res) => {
