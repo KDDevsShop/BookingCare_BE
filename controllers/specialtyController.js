@@ -42,7 +42,27 @@ const getSpecialtyById = async (req, res) => {
   try {
     const { id } = req.params;
     const specialty = await Specialty.findByPk(id, {
-      include: [{ model: Doctor, as: 'doctors' }],
+      include: [
+        {
+          model: Doctor,
+          as: 'doctors',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: {
+                exclude: [
+                  'password',
+                  'createdAt',
+                  'updatedAt',
+                  'resetToken',
+                  'resetTokenExpire',
+                ],
+              },
+            },
+          ],
+        },
+      ],
     });
     if (!specialty)
       return res.status(404).json({ message: 'Specialty not found' });
