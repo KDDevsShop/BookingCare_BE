@@ -131,6 +131,21 @@ const getBookingById = async (req, res) => {
           attributes: {
             exclude: ['id', 'accountId', 'createdAt', 'updatedAt'],
           },
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: {
+                exclude: [
+                  'password',
+                  'createdAt',
+                  'updatedAt',
+                  'resetToken',
+                  'resetTokenExpire',
+                ],
+              },
+            },
+          ],
         },
         {
           model: Doctor,
