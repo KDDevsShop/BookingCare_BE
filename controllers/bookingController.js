@@ -215,6 +215,18 @@ const cancelBooking = async (req, res) => {
     if (booking.bookingStatus === 'Đã hủy') {
       return res.status(400).json({ message: 'Booking đã bị hủy trước đó' });
     }
+    // Check if current time is less than 1 hour before appointment
+    const now = new Date();
+    const bookingDateTime = new Date(
+      `${booking.bookingDate}T${booking.bookingStartTime}`
+    );
+    const diffMs = bookingDateTime - now;
+    const diffMinutes = diffMs / (1000 * 60);
+    if (diffMinutes <= 60) {
+      return res.status(400).json({
+        message: 'Bạn chỉ có thể hủy lịch trước giờ hẹn ít nhất 1 tiếng.',
+      });
+    }
     booking.bookingStatus = 'Đã hủy';
     await booking.save();
     // Giảm currentPatients của DoctorSchedule nếu có
