@@ -224,12 +224,10 @@ const getDoctorBySpecialty = async (req, res) => {
     }
     return res.status(200).json(doctors);
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: 'Get doctors by specialty failed',
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: 'Get doctors by specialty failed',
+      error: error.message,
+    });
   }
 };
 
@@ -316,6 +314,7 @@ module.exports = {
   createDoctor,
   getAllDoctors,
   getDoctorById,
+  getDoctorBySpecialty,
   updateDoctor,
   deleteDoctor,
 };
