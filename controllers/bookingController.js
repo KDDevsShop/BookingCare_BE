@@ -288,6 +288,7 @@ const getDoctorBookings = async (req, res) => {
         ['bookingDate', 'DESC'],
         ['bookingStartTime', 'DESC'],
       ],
+      distinct: true,
     });
     return res.status(200).json(bookings);
   } catch (error) {
