@@ -52,10 +52,6 @@ const createBooking = async (req, res) => {
       include: [{ model: Schedule, as: 'schedule' }],
     });
 
-    console.log(bookingDate, doctorId);
-
-    console.log('doctorSchedules: ', doctorSchedules);
-
     const matchingSchedule = doctorSchedules.find((ds) => {
       if (!ds.schedule) {
         console.log('không okkkkkkkkkkkkk');
@@ -134,8 +130,7 @@ const getBookingById = async (req, res) => {
           },
           include: [
             {
-              model: Account,
-              as: 'account',
+              association: 'account',
               attributes: {
                 exclude: [
                   'password',
