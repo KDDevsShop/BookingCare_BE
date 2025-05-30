@@ -1,5 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
   const Doctor = sequelize.define('Doctor', {
+    doctorTitle: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'Bác sĩ',
+    },
     doctorName: {
       type: DataTypes.STRING,
       allowNull: false,
