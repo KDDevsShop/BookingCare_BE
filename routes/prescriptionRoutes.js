@@ -16,5 +16,7 @@ router.put(
   prescriptionController.updatePrescription
 );
 router.delete('/:id', prescriptionController.deletePrescription);
+// Send prescription email API
+router.post('/send-email', prescriptionController.sendPrescriptionEmail);
 
 module.exports = router;
