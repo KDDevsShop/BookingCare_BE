@@ -373,9 +373,37 @@ const getPatientBookingHistories = async (req, res) => {
       order: [
         ['bookingDate', 'DESC'],
         ['bookingStartTime', 'DESC'],
+        [{ model: Prescription, as: 'prescription' }, 'createdDate', 'DESC'],
       ],
+      distinct: true,
     });
-    return res.status(200).json(bookings);
+    // Group prescriptions as array for each booking
+    const result = [];
+    const seen = new Set();
+    for (const booking of bookings) {
+      if (!seen.has(booking.id)) {
+        const allPrescriptions = bookings
+          .filter((b) => b.id === booking.id)
+          .flatMap((b) =>
+            Array.isArray(b.prescription)
+              ? b.prescription
+              : b.prescription
+              ? [b.prescription]
+              : []
+          );
+        const uniquePrescriptions = Object.values(
+          allPrescriptions.reduce((acc, p) => {
+            if (p && p.id) acc[p.id] = p;
+            return acc;
+          }, {})
+        );
+        const bookingObj = booking.toJSON();
+        bookingObj.prescription = uniquePrescriptions;
+        result.push(bookingObj);
+        seen.add(booking.id);
+      }
+    }
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
       message: 'Get patient booking histories failed',
