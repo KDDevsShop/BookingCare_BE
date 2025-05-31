@@ -314,20 +314,20 @@ const cancelBooking = async (req, res) => {
     console.log('==================DEBUG==================');
 
     console.log('Doctor Schedule:', doctorSchedule);
-    console.log('Booking Start Time:', booking.bookingStartTime);
-    console.log('Booking End Time:', booking.bookingEndTime);
     console.log(
       'Doctor Schedule Start Time:',
       doctorSchedule?.schedule?.startTime
     );
     console.log('Doctor Schedule End Time:', doctorSchedule?.schedule?.endTime);
+    console.log('Booking Start Time:', booking.bookingStartTime);
+    console.log('Booking End Time:', booking.bookingEndTime);
     console.log('Current Patients:', doctorSchedule?.currentPatients);
 
     if (
       doctorSchedule &&
-      doctorSchedule.schedule &&
-      doctorSchedule.schedule.startTime === booking.bookingStartTime &&
-      doctorSchedule.schedule.endTime === booking.bookingEndTime
+      doctorSchedule?.schedule &&
+      doctorSchedule?.schedule.startTime === booking.bookingStartTime &&
+      doctorSchedule?.schedule.endTime === booking.bookingEndTime
     ) {
       if (doctorSchedule.currentPatients > 0) {
         doctorSchedule.currentPatients -= 1;
