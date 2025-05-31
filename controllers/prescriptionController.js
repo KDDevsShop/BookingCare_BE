@@ -187,7 +187,7 @@ const sendPrescriptionEmail = async (req, res) => {
         `,
         attachments: attachment,
       };
-      booking.status = 'Đã hoàn thành';
+      booking.bookingStatus = 'Đã hoàn thành';
       Promise.all([transporter.sendMail(mailOptions), booking.save()]);
       return res.status(200).json({
         message:
