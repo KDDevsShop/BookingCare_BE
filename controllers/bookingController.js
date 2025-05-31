@@ -301,15 +301,17 @@ const cancelBooking = async (req, res) => {
     booking.bookingStatus = 'Đã hủy';
     await booking.save();
 
-    const doctorSchedule = await DoctorSchedule.findOne({
-      where: {
-        doctorId: booking.doctorId,
-        workDate: booking.bookingDate,
-        scheduleStartTime: booking.bookingStartTime,
-        scheduleEndTime: booking.bookingEndTime,
-      },
+    const doctorSchedules = await DoctorSchedule.findAll({
+      where: { doctorId: booking.doctorId, workDate: booking.bookingDate },
       include: [{ model: Schedule, as: 'schedule' }],
     });
+
+    const doctorSchedule = doctorSchedules.find(
+      (ds) =>
+        ds.schedule &&
+        ds.schedule.startTime === booking.bookingStartTime &&
+        ds.schedule.endTime === booking.bookingEndTime
+    );
 
     console.log('==================DEBUG==================');
 
