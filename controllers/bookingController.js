@@ -5,8 +5,8 @@ const {
   Prescription,
   DoctorSchedule,
   Schedule,
+  Account,
 } = require('../models');
-const Account = require('../models/Account');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
@@ -93,6 +93,7 @@ const createBooking = async (req, res) => {
     const patient = await Patient.findByPk(patientId, {
       include: [{ model: Account, as: 'account' }],
     });
+
     if (patient && patient.account && patient.account.email) {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -101,6 +102,7 @@ const createBooking = async (req, res) => {
           pass: process.env.EMAIL_PASS,
         },
       });
+
       const confirmUrl = `http://localhost:5173/booking/confirm?bookingId=${newBooking.id}`;
       const mailOptions = {
         from: process.env.EMAIL_USER,
@@ -331,7 +333,10 @@ const getDoctorBookings = async (req, res) => {
     }
     // Get all bookings for the doctor, include all prescriptions as an array
     const bookings = await Booking.findAll({
-      where: { doctorId },
+      where: {
+        doctorId,
+        bookingStatus: { [require('sequelize').Op.ne]: 'Chờ xác nhận' }, // Exclude 'Chờ xác nhận'
+      },
       include: [
         { model: Patient, as: 'patient', attributes: ['id', 'patientName'] },
         { model: Prescription, as: 'prescription' },
