@@ -491,10 +491,11 @@ async function findMatchingDoctorSchedule({
 const confirmBooking = async (req, res) => {
   try {
     const { bookingId } = req.body;
+    console.log(bookingId);
     if (!bookingId) {
       return res.status(400).json({ message: 'bookingId is required' });
     }
-    const booking = await Booking.findByPk(bookingId);
+    const booking = await Booking.findByPk(parseInt(bookingId));
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
