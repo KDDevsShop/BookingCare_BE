@@ -5,6 +5,7 @@ const bookingController = require('../controllers/bookingController');
 router.post('/', bookingController.createBooking);
 router.get('/', bookingController.getAllBookings);
 router.get('/:id', bookingController.getBookingById);
+router.put('/confirm', bookingController.confirmBooking);
 router.put('/:id', bookingController.updateBooking);
 router.delete('/:id', bookingController.deleteBooking);
 router.patch('/:id/cancel', bookingController.cancelBooking);
@@ -13,7 +14,5 @@ router.get(
   bookingController.getPatientBookingHistories
 );
 router.get('/doctor/:doctorId', bookingController.getDoctorBookings);
-// Confirm booking by bookingId (PUT)
-router.put('/confirm', bookingController.confirmBooking);
 
 module.exports = router;
