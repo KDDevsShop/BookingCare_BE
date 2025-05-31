@@ -67,10 +67,38 @@ const updatePatient = async (req, res) => {
     }
     return res.status(200).json({ message: 'Patient updated', patient });
   } catch (error) {
+    return res.status(500).json({
+      message: 'Update patient failed',
+      error: error?.message || error,
+    });
+  }
+};
+
+// Delete patient and account
+const deletePatient = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const patient = await Patient.findByPk(id, {
+      include: [{ model: Account, as: 'account' }],
+    });
+    if (!patient) return res.status(404).json({ message: 'Patient not found' });
+    // Remove avatar if exists
+    if (patient.account && patient.account.userAvatar) {
+      const oldPath = path.join(__dirname, '..', patient.account.userAvatar);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+    // Delete account if exists
+    if (patient.account) {
+      await patient.account.destroy();
+    }
+    // Delete patient
+    await patient.destroy();
+    return res.status(200).json({ message: 'Patient deleted' });
+  } catch (error) {
     return res
       .status(500)
       .json({
-        message: 'Update patient failed',
+        message: 'Delete patient failed',
         error: error?.message || error,
       });
   }
@@ -80,4 +108,5 @@ module.exports = {
   getAllPatients,
   getPatientById,
   updatePatient,
+  deletePatient,
 };

@@ -10,5 +10,6 @@ router.put(
   upload.single('userAvatar'),
   patientController.updatePatient
 );
+router.delete('/:id', patientController.deletePatient);
 
 module.exports = router;
