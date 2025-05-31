@@ -274,26 +274,33 @@ const deleteBooking = async (req, res) => {
 const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
+
     const booking = await Booking.findByPk(id);
+
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
     if (booking.bookingStatus === 'Đã hủy') {
       return res.status(400).json({ message: 'Booking đã bị hủy trước đó' });
     }
     // Check if current time is less than 1 hour before appointment
     const now = new Date();
+
     const bookingDateTime = new Date(
       `${booking.bookingDate}T${booking.bookingStartTime}`
     );
+
     const diffMs = bookingDateTime - now;
     const diffMinutes = diffMs / (1000 * 60);
+
     if (diffMinutes <= 60) {
       return res.status(400).json({
         message: 'Bạn chỉ có thể hủy lịch trước giờ hẹn ít nhất 1 tiếng.',
       });
     }
+
     booking.bookingStatus = 'Đã hủy';
     await booking.save();
-    // Giảm currentPatients của DoctorSchedule nếu có
+
     const doctorSchedule = await DoctorSchedule.findOne({
       where: {
         doctorId: booking.doctorId,
@@ -301,6 +308,19 @@ const cancelBooking = async (req, res) => {
       },
       include: [{ model: Schedule, as: 'schedule' }],
     });
+
+    console.log('==================DEBUG==================');
+
+    console.log('Doctor Schedule:', doctorSchedule);
+    console.log('Booking Start Time:', booking.bookingStartTime);
+    console.log('Booking End Time:', booking.bookingEndTime);
+    console.log(
+      'Doctor Schedule Start Time:',
+      doctorSchedule?.schedule?.startTime
+    );
+    console.log('Doctor Schedule End Time:', doctorSchedule?.schedule?.endTime);
+    console.log('Current Patients:', doctorSchedule?.currentPatients);
+
     if (
       doctorSchedule &&
       doctorSchedule.schedule &&
@@ -309,7 +329,7 @@ const cancelBooking = async (req, res) => {
     ) {
       if (doctorSchedule.currentPatients > 0) {
         doctorSchedule.currentPatients -= 1;
-        // Nếu đã full trước đó thì mở lại lịch nếu cần
+
         if (!doctorSchedule.isAvailable) {
           doctorSchedule.isAvailable = true;
         }
@@ -532,7 +552,7 @@ const confirmBooking = async (req, res) => {
             pass: process.env.EMAIL_PASS,
           },
         });
-        const doctorUrl = `http://localhost:5173/doctor/bookings/${booking.id}`;
+        const doctorUrl = `http://localhost:5173/doctor/booking/${booking.id}`;
         const mailOptions = {
           from: process.env.EMAIL_USER,
           to: doctor.account.email,
