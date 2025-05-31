@@ -305,6 +305,8 @@ const cancelBooking = async (req, res) => {
       where: {
         doctorId: booking.doctorId,
         workDate: booking.bookingDate,
+        scheduleStartTime: booking.bookingStartTime,
+        scheduleEndTime: booking.bookingEndTime,
       },
       include: [{ model: Schedule, as: 'schedule' }],
     });
