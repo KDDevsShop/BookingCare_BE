@@ -120,25 +120,27 @@ const deletePrescription = async (req, res) => {
 const sendPrescriptionEmail = async (req, res) => {
   try {
     const { bookingId, prescriptionId } = req.body;
+
     if (!bookingId || !prescriptionId) {
       return res
         .status(400)
         .json({ message: 'bookingId and prescriptionId are required' });
     }
+
     const prescription = await Prescription.findByPk(prescriptionId);
     if (!prescription) {
       return res.status(404).json({ message: 'Prescription not found' });
     }
+
     const booking = await Booking.findByPk(bookingId);
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-    // Update booking status to "Đã hoàn thành" before sending email
-    booking.status = 'Đã hoàn thành';
-    await booking.save();
+
     const patient = await Patient.findByPk(booking.patientId, {
       include: [{ model: Account, as: 'account' }],
     });
+
     if (patient && patient.account && patient.account.email) {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -185,7 +187,8 @@ const sendPrescriptionEmail = async (req, res) => {
         `,
         attachments: attachment,
       };
-      await transporter.sendMail(mailOptions);
+      booking.status = 'Đã hoàn thành';
+      Promise.all([transporter.sendMail(mailOptions), booking.save()]);
       return res.status(200).json({
         message:
           'Prescription email sent successfully, booking status updated to Đã hoàn thành',
