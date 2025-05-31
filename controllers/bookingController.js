@@ -204,12 +204,21 @@ const getBookingById = async (req, res) => {
             ],
           },
         },
-        { model: Prescription, as: 'prescription' },
+        { model: Prescription, as: 'prescription', distinct: true },
+      ],
+      order: [
+        [{ model: Prescription, as: 'prescription' }, 'createdDate', 'DESC'],
       ],
     });
-
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
-    return res.status(200).json(booking);
+    // Ensure prescription is always an array
+    const bookingObj = booking.toJSON();
+    if (bookingObj.prescription && !Array.isArray(bookingObj.prescription)) {
+      bookingObj.prescription = bookingObj.prescription
+        ? [bookingObj.prescription]
+        : [];
+    }
+    return res.status(200).json(bookingObj);
   } catch (error) {
     return res
       .status(500)
