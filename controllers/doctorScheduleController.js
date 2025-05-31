@@ -149,6 +149,69 @@ const getSchedulesByDoctorId = async (req, res) => {
   }
 };
 
+const getAllWorkSchedulesByDoctor = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    if (!doctorId) {
+      return res.status(400).json({ message: 'doctorId is required' });
+    }
+    const workSchedules = await DoctorSchedule.findAll({
+      where: { doctorId },
+      include: [{ model: Schedule, as: 'schedule' }],
+      order: [
+        ['workDate', 'ASC'],
+        [{ model: Schedule, as: 'schedule' }, 'startTime', 'ASC'],
+      ],
+    });
+    return res.status(200).json(workSchedules);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Get all work schedules failed', error: error.message });
+  }
+};
+
+// Approve a doctor schedule (set isConfirmed to true)
+const approveDoctorSchedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doctorSchedule = await DoctorSchedule.findByPk(id);
+    if (!doctorSchedule) {
+      return res.status(404).json({ message: 'Doctor schedule not found' });
+    }
+    doctorSchedule.isConfirmed = true;
+    await doctorSchedule.save();
+    return res
+      .status(200)
+      .json({ message: 'Doctor schedule approved', doctorSchedule });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Approve doctor schedule failed',
+      error: error.message,
+    });
+  }
+};
+
+// Reject a doctor schedule (set isConfirmed to false)
+const rejectDoctorSchedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doctorSchedule = await DoctorSchedule.findByPk(id);
+    if (!doctorSchedule) {
+      return res.status(404).json({ message: 'Doctor schedule not found' });
+    }
+    doctorSchedule.isConfirmed = false;
+    await doctorSchedule.save();
+    return res
+      .status(200)
+      .json({ message: 'Doctor schedule rejected', doctorSchedule });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Reject doctor schedule failed', error: error.message });
+  }
+};
+
 module.exports = {
   createDoctorSchedule,
   getAllDoctorSchedules,
@@ -156,4 +219,7 @@ module.exports = {
   updateDoctorSchedule,
   deleteDoctorSchedule,
   getSchedulesByDoctorId,
+  getAllWorkSchedulesByDoctor,
+  approveDoctorSchedule,
+  rejectDoctorSchedule, // export new API
 };
