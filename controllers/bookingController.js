@@ -7,6 +7,8 @@ const {
   Schedule,
 } = require('../models');
 const Account = require('../models/Account');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 // Create a new booking
 const createBooking = async (req, res) => {
@@ -54,10 +56,8 @@ const createBooking = async (req, res) => {
 
     const matchingSchedule = doctorSchedules.find((ds) => {
       if (!ds.schedule) {
-        console.log('không okkkkkkkkkkkkk');
         return false;
       }
-      console.log('okkkkkkkkkkkkkk');
       return (
         ds.schedule.startTime === bookingStartTime &&
         ds.schedule.endTime === bookingEndTime
@@ -77,7 +77,7 @@ const createBooking = async (req, res) => {
       });
     }
 
-    const booking = await Booking.create({
+    const newBooking = await Booking.create({
       bookingDate,
       bookingStartTime,
       bookingEndTime,
@@ -87,10 +87,56 @@ const createBooking = async (req, res) => {
       doctorId,
     });
 
-    matchingSchedule.currentPatients += 1;
     await matchingSchedule.save();
 
-    return res.status(201).json({ message: 'Booking created', booking });
+    // Send booking confirmation email to patient
+    const patient = await Patient.findByPk(patientId, {
+      include: [{ model: Account, as: 'account' }],
+    });
+    if (patient && patient.account && patient.account.email) {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+      const confirmUrl = `http://localhost:5173/booking/confirm?bookingId=${newBooking.id}`;
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: patient.account.email,
+        subject: 'Xác nhận đặt lịch khám - BookingCare',
+        html: `
+          <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #f9f9f9; border-radius: 12px; padding: 32px 24px; box-shadow: 0 2px 8px #e0e0e0;">
+            <h2 style="color: #1976d2; margin-bottom: 16px;">Xác nhận đặt lịch khám</h2>
+            <p style="font-size: 16px; color: #333;">Xin chào <b>${
+              patient.patientName
+            }</b>,</p>
+            <p style="font-size: 15px; color: #333;">Cảm ơn bạn đã đặt lịch khám tại BookingCare. Dưới đây là thông tin chi tiết về lịch hẹn của bạn:</p>
+            <ul style="font-size: 15px; color: #333;">
+              <li><b>Ngày khám:</b> ${bookingDate}</li>
+              <li><b>Thời gian:</b> ${bookingStartTime} - ${bookingEndTime}</li>
+              <li><b>Bác sĩ:</b> ${doctor.doctorName}</li>
+              <li><b>Lý do khám:</b> ${bookingReason || 'Không có'}</li>
+              <li><b>Giá khám:</b> ${doctor.examinationPrice?.toLocaleString(
+                'vi-VN'
+              )} VNĐ</li>
+            </ul>
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${confirmUrl}" style="display: inline-block; background: #1976d2; color: #fff; font-size: 16px; font-weight: 600; padding: 14px 36px; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 8px #e0e0e0; transition: background 0.2s;">Xác nhận lịch khám</a>
+            </div>
+            <p style="font-size: 14px; color: #888;">Nếu bạn không thực hiện đặt lịch này, vui lòng bỏ qua email này hoặc liên hệ với chúng tôi để được hỗ trợ.</p>
+            <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #eee;" />
+            <div style="font-size: 13px; color: #bbb; text-align: center;">&copy; ${new Date().getFullYear()} BookingCare. All rights reserved.</div>
+          </div>
+        `,
+      };
+      await transporter.sendMail(mailOptions);
+    }
+
+    return res
+      .status(201)
+      .json({ message: 'Booking created', booking: newBooking });
   } catch (error) {
     console.error('Create booking error: ', error);
     return res
@@ -412,6 +458,115 @@ const getPatientBookingHistories = async (req, res) => {
   }
 };
 
+// Helper to find matching DoctorSchedule for a booking
+async function findMatchingDoctorSchedule({
+  doctorId,
+  bookingDate,
+  bookingStartTime,
+  bookingEndTime,
+}) {
+  const doctorSchedules = await DoctorSchedule.findAll({
+    where: { doctorId, workDate: bookingDate },
+    include: [{ model: Schedule, as: 'schedule' }],
+  });
+  return doctorSchedules.find(
+    (ds) =>
+      ds.schedule &&
+      ds.schedule.startTime === bookingStartTime &&
+      ds.schedule.endTime === bookingEndTime
+  );
+}
+
+// Confirm booking by bookingId
+const confirmBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    if (!bookingId) {
+      return res.status(400).json({ message: 'bookingId is required' });
+    }
+    const booking = await Booking.findByPk(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    // Check DoctorSchedule as in createBooking
+    const matchingSchedule = await findMatchingDoctorSchedule({
+      doctorId: booking.doctorId,
+      bookingDate: booking.bookingDate,
+      bookingStartTime: booking.bookingStartTime,
+      bookingEndTime: booking.bookingEndTime,
+    });
+    if (!matchingSchedule) {
+      return res.status(400).json({
+        message: 'Không tìm thấy ca làm việc của bác sĩ vào thời gian này',
+      });
+    }
+    if (!matchingSchedule.isAvailable) {
+      return res.status(400).json({
+        message:
+          'Bác sĩ này không còn lịch rảnh vào thời gian này, vui lòng chọn thời gian khác',
+      });
+    }
+    // Update booking status and DoctorSchedule & send email in parallel
+    booking.bookingStatus = 'Đã xác nhận';
+    // Prepare doctor email logic
+    const doctorPromise = (async () => {
+      const doctor = await Doctor.findByPk(booking.doctorId, {
+        include: [{ model: Account, as: 'account' }],
+      });
+      if (doctor && doctor.account && doctor.account.email) {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+        const doctorUrl = `http://localhost:5173/doctor/bookings/${booking.id}`;
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: doctor.account.email,
+          subject: 'Lịch khám đã được xác nhận - BookingCare',
+          html: `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #f9f9f9; border-radius: 12px; padding: 32px 24px; box-shadow: 0 2px 8px #e0e0e0;">
+              <h2 style="color: #1976d2; margin-bottom: 16px;">Lịch khám đã được xác nhận</h2>
+              <p style="font-size: 16px; color: #333;">Xin chào <b>${
+                doctor.doctorName
+              }</b>,</p>
+              <p style="font-size: 15px; color: #333;">Một lịch khám mới đã được xác nhận bởi bệnh nhân. Vui lòng kiểm tra chi tiết lịch hẹn bên dưới:</p>
+              <ul style="font-size: 15px; color: #333;">
+                <li><b>Mã lịch khám:</b> ${booking.id}</li>
+                <li><b>Ngày khám:</b> ${booking.bookingDate}</li>
+                <li><b>Thời gian:</b> ${booking.bookingStartTime} - ${
+            booking.bookingEndTime
+          }</li>
+                <li><b>Trạng thái:</b> Đã xác nhận</li>
+              </ul>
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${doctorUrl}" style="display: inline-block; background: #1976d2; color: #fff; font-size: 16px; font-weight: 600; padding: 14px 36px; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 8px #e0e0e0; transition: background 0.2s;">Xem chi tiết lịch khám</a>
+              </div>
+              <p style="font-size: 14px; color: #888;">Vui lòng đăng nhập vào hệ thống để xem thêm thông tin chi tiết về bệnh nhân và chuẩn bị cho buổi khám.</p>
+              <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #eee;" />
+              <div style="font-size: 13px; color: #bbb; text-align: center;">&copy; ${new Date().getFullYear()} BookingCare. All rights reserved.</div>
+            </div>
+          `,
+        };
+        await transporter.sendMail(mailOptions);
+      }
+    })();
+    // Update DoctorSchedule
+    const schedulePromise = (async () => {
+      matchingSchedule.currentPatients += 1;
+      await matchingSchedule.save();
+    })();
+    await Promise.all([booking.save(), doctorPromise, schedulePromise]);
+    return res.status(200).json({ message: 'Booking confirmed', booking });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Confirm booking failed', error: error.message });
+  }
+};
+
 module.exports = {
   createBooking,
   getAllBookings,
@@ -422,4 +577,5 @@ module.exports = {
   getPatientBookingHistories,
   getDoctorBookings,
   getPatientBookings,
+  confirmBooking,
 };

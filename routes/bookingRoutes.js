@@ -13,5 +13,7 @@ router.get(
   bookingController.getPatientBookingHistories
 );
 router.get('/doctor/:doctorId', bookingController.getDoctorBookings);
+// Confirm booking by bookingId (PUT)
+router.put('/confirm', bookingController.confirmBooking);
 
 module.exports = router;
