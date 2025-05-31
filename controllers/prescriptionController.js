@@ -133,6 +133,9 @@ const sendPrescriptionEmail = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
+    // Update booking status to "Đã hoàn thành" before sending email
+    booking.status = 'Đã hoàn thành';
+    await booking.save();
     const patient = await Patient.findByPk(booking.patientId, {
       include: [{ model: Account, as: 'account' }],
     });
@@ -183,19 +186,18 @@ const sendPrescriptionEmail = async (req, res) => {
         attachments: attachment,
       };
       await transporter.sendMail(mailOptions);
-      return res
-        .status(200)
-        .json({ message: 'Prescription email sent successfully' });
+      return res.status(200).json({
+        message:
+          'Prescription email sent successfully, booking status updated to Đã hoàn thành',
+      });
     } else {
       return res.status(404).json({ message: 'Patient email not found' });
     }
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: 'Send prescription email failed',
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: 'Send prescription email failed',
+      error: error.message,
+    });
   }
 };
 
