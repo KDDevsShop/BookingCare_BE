@@ -6,9 +6,9 @@ const {
   DoctorSchedule,
   Schedule,
   Account,
-} = require('../models');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+} = require("../models");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 
 // Create a new booking
 const createBooking = async (req, res) => {
@@ -24,14 +24,14 @@ const createBooking = async (req, res) => {
 
     if (new Date(bookingDate) < new Date()) {
       return res.status(400).json({
-        message: 'Booking date cannot be in the past',
+        message: "Booking date cannot be in the past",
       });
     }
 
     if (bookingStartTime >= bookingEndTime) {
       return res
         .status(400)
-        .json({ message: 'Booking start time must be before end time' });
+        .json({ message: "Booking start time must be before end time" });
     }
 
     if (
@@ -41,17 +41,17 @@ const createBooking = async (req, res) => {
       !patientId ||
       !doctorId
     ) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
     const doctor = await Doctor.findByPk(doctorId);
     if (!doctor) {
-      return res.status(404).json({ message: 'Doctor not found' });
+      return res.status(404).json({ message: "Doctor not found" });
     }
 
     const doctorSchedules = await DoctorSchedule.findAll({
       where: { doctorId, workDate: bookingDate },
-      include: [{ model: Schedule, as: 'schedule' }],
+      include: [{ model: Schedule, as: "schedule" }],
     });
 
     const matchingSchedule = doctorSchedules.find((ds) => {
@@ -66,14 +66,14 @@ const createBooking = async (req, res) => {
 
     if (!matchingSchedule) {
       return res.status(400).json({
-        message: 'Không tìm thấy ca làm việc của bác sĩ vào thời gian này',
+        message: "Không tìm thấy ca làm việc của bác sĩ vào thời gian này",
       });
     }
 
     if (!matchingSchedule.isAvailable) {
       return res.status(400).json({
         message:
-          'Bác sĩ này không còn lịch rảnh vào thời gian này, vui lòng chọn thời gian khác',
+          "Bác sĩ này không còn lịch rảnh vào thời gian này, vui lòng chọn thời gian khác",
       });
     }
 
@@ -91,12 +91,12 @@ const createBooking = async (req, res) => {
 
     // Send booking confirmation email to patient
     const patient = await Patient.findByPk(patientId, {
-      include: [{ model: Account, as: 'account' }],
+      include: [{ model: Account, as: "account" }],
     });
 
     if (patient && patient.account && patient.account.email) {
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        service: "gmail",
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
@@ -107,7 +107,7 @@ const createBooking = async (req, res) => {
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: patient.account.email,
-        subject: 'Xác nhận đặt lịch khám - BookingCare',
+        subject: "Xác nhận đặt lịch khám - BookingCare",
         html: `
           <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #f9f9f9; border-radius: 12px; padding: 32px 24px; box-shadow: 0 2px 8px #e0e0e0;">
             <h2 style="color: #1976d2; margin-bottom: 16px;">Xác nhận đặt lịch khám</h2>
@@ -119,9 +119,9 @@ const createBooking = async (req, res) => {
               <li><b>Ngày khám:</b> ${bookingDate}</li>
               <li><b>Thời gian:</b> ${bookingStartTime} - ${bookingEndTime}</li>
               <li><b>Bác sĩ:</b> ${doctor.doctorName}</li>
-              <li><b>Lý do khám:</b> ${bookingReason || 'Không có'}</li>
+              <li><b>Lý do khám:</b> ${bookingReason || "Không có"}</li>
               <li><b>Giá khám:</b> ${doctor.examinationPrice?.toLocaleString(
-                'vi-VN'
+                "vi-VN"
               )} VNĐ</li>
             </ul>
             <div style="text-align: center; margin: 32px 0;">
@@ -138,12 +138,12 @@ const createBooking = async (req, res) => {
 
     return res
       .status(201)
-      .json({ message: 'Booking created', booking: newBooking });
+      .json({ message: "Booking created", booking: newBooking });
   } catch (error) {
-    console.error('Create booking error: ', error);
+    console.error("Create booking error: ", error);
     return res
       .status(500)
-      .json({ message: 'Create booking failed', error: error.message });
+      .json({ message: "Create booking failed", error: error.message });
   }
 };
 
@@ -152,15 +152,15 @@ const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.findAll({
       include: [
-        { model: Patient, as: 'patient', attributes: ['id', 'patientName'] },
-        { model: Doctor, as: 'doctor', attributes: ['id', 'doctorName'] },
+        { model: Patient, as: "patient", attributes: ["id", "patientName"] },
+        { model: Doctor, as: "doctor", attributes: ["id", "doctorName"] },
       ],
     });
     return res.status(200).json(bookings);
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Get bookings failed', error: error.message });
+      .json({ message: "Get bookings failed", error: error.message });
   }
 };
 
@@ -172,20 +172,20 @@ const getBookingById = async (req, res) => {
       include: [
         {
           model: Patient,
-          as: 'patient',
+          as: "patient",
           attributes: {
-            exclude: ['id', 'accountId', 'createdAt', 'updatedAt'],
+            exclude: ["id", "accountId", "createdAt", "updatedAt"],
           },
           include: [
             {
-              association: 'account',
+              association: "account",
               attributes: {
                 exclude: [
-                  'password',
-                  'createdAt',
-                  'updatedAt',
-                  'resetToken',
-                  'resetTokenExpire',
+                  "password",
+                  "createdAt",
+                  "updatedAt",
+                  "resetToken",
+                  "resetTokenExpire",
                 ],
               },
             },
@@ -193,26 +193,26 @@ const getBookingById = async (req, res) => {
         },
         {
           model: Doctor,
-          as: 'doctor',
+          as: "doctor",
           attributes: {
             exclude: [
-              'id',
-              'createdAt',
-              'updatedAt',
-              'accountId',
-              'doctorSortDesc',
-              'doctorDetailDesc',
-              'specialtyId',
+              "id",
+              "createdAt",
+              "updatedAt",
+              "accountId",
+              "doctorSortDesc",
+              "doctorDetailDesc",
+              "specialtyId",
             ],
           },
         },
       ],
     });
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
     // Always fetch all prescriptions for this booking
     const prescriptions = await Prescription.findAll({
       where: { bookingId: booking.id },
-      order: [['createdDate', 'DESC']],
+      order: [["createdDate", "DESC"]],
     });
     const bookingObj = booking.toJSON();
     bookingObj.prescription = prescriptions || [];
@@ -220,7 +220,7 @@ const getBookingById = async (req, res) => {
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Get booking failed', error: error.message });
+      .json({ message: "Get booking failed", error: error.message });
   }
 };
 
@@ -238,7 +238,7 @@ const updateBooking = async (req, res) => {
       doctorId,
     } = req.body;
     const booking = await Booking.findByPk(id);
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
     booking.bookingDate = bookingDate || booking.bookingDate;
     booking.bookingStartTime = bookingStartTime || booking.bookingStartTime;
     booking.bookingEndTime = bookingEndTime || booking.bookingEndTime;
@@ -247,11 +247,11 @@ const updateBooking = async (req, res) => {
     booking.patientId = patientId || booking.patientId;
     booking.doctorId = doctorId || booking.doctorId;
     await booking.save();
-    return res.status(200).json({ message: 'Booking updated', booking });
+    return res.status(200).json({ message: "Booking updated", booking });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Update booking failed', error: error.message });
+      .json({ message: "Update booking failed", error: error.message });
   }
 };
 
@@ -260,13 +260,13 @@ const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const booking = await Booking.findByPk(id);
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
     await booking.destroy();
-    return res.status(200).json({ message: 'Booking deleted' });
+    return res.status(200).json({ message: "Booking deleted" });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Delete booking failed', error: error.message });
+      .json({ message: "Delete booking failed", error: error.message });
   }
 };
 
@@ -277,10 +277,10 @@ const cancelBooking = async (req, res) => {
 
     const booking = await Booking.findByPk(id);
 
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-    if (booking.bookingStatus === 'Đã hủy') {
-      return res.status(400).json({ message: 'Booking đã bị hủy trước đó' });
+    if (booking.bookingStatus === "Đã hủy") {
+      return res.status(400).json({ message: "Booking đã bị hủy trước đó" });
     }
     // Check if current time is less than 1 hour before appointment
     const now = new Date();
@@ -294,11 +294,11 @@ const cancelBooking = async (req, res) => {
 
     if (diffMinutes <= 60) {
       return res.status(400).json({
-        message: 'Bạn chỉ có thể hủy lịch trước giờ hẹn ít nhất 1 tiếng.',
+        message: "Bạn chỉ có thể hủy lịch trước giờ hẹn ít nhất 1 tiếng.",
       });
     }
 
-    booking.bookingStatus = 'Đã hủy';
+    booking.bookingStatus = "Đã hủy";
     await booking.save();
 
     const doctorSchedule = await DoctorSchedule.findOne({
@@ -308,20 +308,20 @@ const cancelBooking = async (req, res) => {
         scheduleStartTime: booking.bookingStartTime,
         scheduleEndTime: booking.bookingEndTime,
       },
-      include: [{ model: Schedule, as: 'schedule' }],
+      include: [{ model: Schedule, as: "schedule" }],
     });
 
-    console.log('==================DEBUG==================');
+    console.log("==================DEBUG==================");
 
-    console.log('Doctor Schedule:', doctorSchedule);
-    console.log('Booking Start Time:', booking.bookingStartTime);
-    console.log('Booking End Time:', booking.bookingEndTime);
+    console.log("Doctor Schedule:", doctorSchedule);
+    console.log("Booking Start Time:", booking.bookingStartTime);
+    console.log("Booking End Time:", booking.bookingEndTime);
     console.log(
-      'Doctor Schedule Start Time:',
+      "Doctor Schedule Start Time:",
       doctorSchedule?.schedule?.startTime
     );
-    console.log('Doctor Schedule End Time:', doctorSchedule?.schedule?.endTime);
-    console.log('Current Patients:', doctorSchedule?.currentPatients);
+    console.log("Doctor Schedule End Time:", doctorSchedule?.schedule?.endTime);
+    console.log("Current Patients:", doctorSchedule?.currentPatients);
 
     if (
       doctorSchedule &&
@@ -338,11 +338,11 @@ const cancelBooking = async (req, res) => {
         await doctorSchedule.save();
       }
     }
-    return res.status(200).json({ message: 'Booking đã được hủy', booking });
+    return res.status(200).json({ message: "Booking đã được hủy", booking });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Cancel booking failed', error: error.message });
+      .json({ message: "Cancel booking failed", error: error.message });
   }
 };
 
@@ -351,22 +351,22 @@ const getDoctorBookings = async (req, res) => {
   try {
     const { doctorId } = req.params;
     if (!doctorId) {
-      return res.status(400).json({ message: 'doctorId is required' });
+      return res.status(400).json({ message: "doctorId is required" });
     }
     // Get all bookings for the doctor, include all prescriptions as an array
     const bookings = await Booking.findAll({
       where: {
         doctorId,
-        bookingStatus: { [require('sequelize').Op.ne]: 'Chờ xác nhận' }, // Exclude 'Chờ xác nhận'
+        bookingStatus: { [require("sequelize").Op.ne]: "Chờ xác nhận" }, // Exclude 'Chờ xác nhận'
       },
       include: [
-        { model: Patient, as: 'patient', attributes: ['id', 'patientName'] },
-        { model: Prescription, as: 'prescription' },
+        { model: Patient, as: "patient", attributes: ["id", "patientName"] },
+        { model: Prescription, as: "prescription" },
       ],
       order: [
-        ['bookingDate', 'DESC'],
-        ['bookingStartTime', 'DESC'],
-        [{ model: Prescription, as: 'prescription' }, 'createdDate', 'DESC'],
+        ["bookingDate", "DESC"],
+        ["bookingStartTime", "DESC"],
+        [{ model: Prescription, as: "prescription" }, "createdDate", "DESC"],
       ],
       distinct: true,
     });
@@ -402,7 +402,7 @@ const getDoctorBookings = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
-      message: 'Get doctor bookings failed',
+      message: "Get doctor bookings failed",
       error: error.message,
     });
   }
@@ -413,23 +413,23 @@ const getPatientBookings = async (req, res) => {
   try {
     const { patientId } = req.params;
     if (!patientId) {
-      return res.status(400).json({ message: 'patientId is required' });
+      return res.status(400).json({ message: "patientId is required" });
     }
     const bookings = await Booking.findAll({
       where: { patientId },
       include: [
-        { model: Doctor, as: 'doctor', attributes: ['id', 'doctorName'] },
-        { model: Prescription, as: 'prescription' },
+        { model: Doctor, as: "doctor", attributes: ["id", "doctorName"] },
+        { model: Prescription, as: "prescription" },
       ],
       order: [
-        ['bookingDate', 'DESC'],
-        ['bookingStartTime', 'DESC'],
+        ["bookingDate", "DESC"],
+        ["bookingStartTime", "DESC"],
       ],
     });
     return res.status(200).json(bookings);
   } catch (error) {
     return res.status(500).json({
-      message: 'Get patient bookings failed',
+      message: "Get patient bookings failed",
       error: error.message,
     });
   }
@@ -440,18 +440,18 @@ const getPatientBookingHistories = async (req, res) => {
   try {
     const { patientId } = req.params;
     if (!patientId) {
-      return res.status(400).json({ message: 'patientId is required' });
+      return res.status(400).json({ message: "patientId is required" });
     }
     const bookings = await Booking.findAll({
       where: { patientId },
       include: [
-        { model: Doctor, as: 'doctor', attributes: ['id', 'doctorName'] },
-        { model: Prescription, as: 'prescription' },
+        { model: Doctor, as: "doctor", attributes: ["id", "doctorName"] },
+        { model: Prescription, as: "prescription" },
       ],
       order: [
-        ['bookingDate', 'DESC'],
-        ['bookingStartTime', 'DESC'],
-        [{ model: Prescription, as: 'prescription' }, 'createdDate', 'DESC'],
+        ["bookingDate", "DESC"],
+        ["bookingStartTime", "DESC"],
+        [{ model: Prescription, as: "prescription" }, "createdDate", "DESC"],
       ],
       distinct: true,
     });
@@ -484,7 +484,7 @@ const getPatientBookingHistories = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
-      message: 'Get patient booking histories failed',
+      message: "Get patient booking histories failed",
       error: error.message,
     });
   }
@@ -499,7 +499,7 @@ async function findMatchingDoctorSchedule({
 }) {
   const doctorSchedules = await DoctorSchedule.findAll({
     where: { doctorId, workDate: bookingDate },
-    include: [{ model: Schedule, as: 'schedule' }],
+    include: [{ model: Schedule, as: "schedule" }],
   });
   return doctorSchedules.find(
     (ds) =>
@@ -515,11 +515,11 @@ const confirmBooking = async (req, res) => {
     const { bookingId } = req.body;
     console.log(bookingId);
     if (!bookingId) {
-      return res.status(400).json({ message: 'bookingId is required' });
+      return res.status(400).json({ message: "bookingId is required" });
     }
     const booking = await Booking.findByPk(parseInt(bookingId));
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ message: "Booking not found" });
     }
     // Check DoctorSchedule as in createBooking
     const matchingSchedule = await findMatchingDoctorSchedule({
@@ -530,25 +530,25 @@ const confirmBooking = async (req, res) => {
     });
     if (!matchingSchedule) {
       return res.status(400).json({
-        message: 'Không tìm thấy ca làm việc của bác sĩ vào thời gian này',
+        message: "Không tìm thấy ca làm việc của bác sĩ vào thời gian này",
       });
     }
     if (!matchingSchedule.isAvailable) {
       return res.status(400).json({
         message:
-          'Bác sĩ này không còn lịch rảnh vào thời gian này, vui lòng chọn thời gian khác',
+          "Bác sĩ này không còn lịch rảnh vào thời gian này, vui lòng chọn thời gian khác",
       });
     }
     // Update booking status and DoctorSchedule & send email in parallel
-    booking.bookingStatus = 'Đã xác nhận';
+    booking.bookingStatus = "Đã xác nhận";
     // Prepare doctor email logic
     const doctorPromise = (async () => {
       const doctor = await Doctor.findByPk(booking.doctorId, {
-        include: [{ model: Account, as: 'account' }],
+        include: [{ model: Account, as: "account" }],
       });
       if (doctor && doctor.account && doctor.account.email) {
         const transporter = nodemailer.createTransport({
-          service: 'gmail',
+          service: "gmail",
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -558,7 +558,7 @@ const confirmBooking = async (req, res) => {
         const mailOptions = {
           from: process.env.EMAIL_USER,
           to: doctor.account.email,
-          subject: 'Lịch khám đã được xác nhận - BookingCare',
+          subject: "Lịch khám đã được xác nhận - BookingCare",
           html: `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #f9f9f9; border-radius: 12px; padding: 32px 24px; box-shadow: 0 2px 8px #e0e0e0;">
               <h2 style="color: #1976d2; margin-bottom: 16px;">Lịch khám đã được xác nhận</h2>
@@ -592,11 +592,11 @@ const confirmBooking = async (req, res) => {
       await matchingSchedule.save();
     })();
     await Promise.all([booking.save(), doctorPromise, schedulePromise]);
-    return res.status(200).json({ message: 'Booking confirmed', booking });
+    return res.status(200).json({ message: "Booking confirmed", booking });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Confirm booking failed', error: error.message });
+      .json({ message: "Confirm booking failed", error: error.message });
   }
 };
 
