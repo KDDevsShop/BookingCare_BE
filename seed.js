@@ -57,31 +57,26 @@ async function seedPatients() {
     {
       patientName: 'Nguyễn Văn A',
       patientPhone: '0901234567',
-      patientEmail: 'benhnhan1@benhvien.vn',
       accountId: 3,
     },
     {
       patientName: 'Trần Thị B',
       patientPhone: '0912345678',
-      patientEmail: 'benhnhan2@benhvien.vn',
       accountId: 4,
     },
     {
       patientName: 'Lê Văn C',
       patientPhone: '0923456789',
-      patientEmail: 'le.c@benhvien.vn',
       accountId: null,
     },
     {
       patientName: 'Phạm Thị D',
       patientPhone: '0934567890',
-      patientEmail: 'pham.d@benhvien.vn',
       accountId: null,
     },
     {
       patientName: 'Đỗ Văn E',
       patientPhone: '0945678901',
-      patientEmail: 'do.e@benhvien.vn',
       accountId: null,
     },
   ];
@@ -170,7 +165,6 @@ async function seedPaymentMethods() {
   const paymentMethods = [
     { paymentMethodName: 'Tiền mặt' },
     { paymentMethodName: 'Chuyển khoản ngân hàng' },
-    { paymentMethodName: 'Bảo hiểm y tế' },
   ];
   return db.PaymentMethod.bulkCreate(paymentMethods);
 }

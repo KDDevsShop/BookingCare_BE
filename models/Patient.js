@@ -8,10 +8,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    patientEmail: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
   });
 
   Patient.associate = (models) => {

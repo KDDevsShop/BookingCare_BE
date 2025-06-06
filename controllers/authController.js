@@ -8,7 +8,6 @@ require('dotenv').config();
 const signup = async (req, res) => {
   try {
     const {
-      username,
       password,
       email,
       userDoB,
@@ -19,25 +18,19 @@ const signup = async (req, res) => {
       patientName,
       patientPhone,
     } = req.body;
-    const existingAccount = await Account.findOne({ where: { username } });
+    // Check if email already exists
+    const existingAccount = await Account.findOne({ where: { email } });
 
-    if (
-      !username ||
-      !password ||
-      !email ||
-      !userDoB ||
-      userGender === undefined
-    ) {
+    if (!password || !email || !userDoB || userGender === undefined) {
       console.log(req.body);
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     if (existingAccount) {
-      return res.status(400).json({ message: 'Username already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const account = await Account.create({
-      username,
       password: hashedPassword,
       email,
       userGender,
@@ -57,7 +50,6 @@ const signup = async (req, res) => {
       patient = await Patient.create({
         patientName,
         patientPhone,
-        patientEmail: email,
         accountId: account.id,
       });
     }
@@ -74,10 +66,10 @@ const signup = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     const account = await Account.findOne({
-      where: { username },
+      where: { email },
       include: [
         { model: Patient, as: 'patient' },
         { model: Doctor, as: 'doctor' },
@@ -85,7 +77,7 @@ const login = async (req, res) => {
     });
 
     if (!account) {
-      return res.status(400).json({ message: 'Invalid username or password' });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
     if (account.accountStatus === false) {
@@ -97,13 +89,13 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, account.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid username or password' });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
     const token = jwt.sign(
       { id: account.id, role: account.role },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1d' }
+      { expiresIn: '7d' }
     );
 
     // Remove sensitive/unnecessary fields from account before returning
@@ -243,10 +235,39 @@ const blockAccount = async (req, res) => {
   }
 };
 
+// Change password API
+const changePassword = async (req, res) => {
+  try {
+    const { accountId, oldPassword, newPassword } = req.body;
+    if (!accountId || !oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    const account = await Account.findByPk(accountId);
+    if (!account) {
+      return res.status(404).json({ message: 'Account not found' });
+    }
+    const isMatch = await bcrypt.compare(oldPassword, account.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Old password is incorrect' });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    account.password = hashedPassword;
+    await account.save();
+    return res
+      .status(200)
+      .json({ status: 200, message: 'Password changed successfully' });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Change password failed', error: error.message });
+  }
+};
+
 module.exports = {
   signup,
   login,
   resetPassword,
   forgotPassword,
   blockAccount,
+  changePassword,
 };

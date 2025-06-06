@@ -155,6 +155,7 @@ const getAllBookings = async (req, res) => {
         { model: Patient, as: 'patient', attributes: ['id', 'patientName'] },
         { model: Doctor, as: 'doctor', attributes: ['id', 'doctorName'] },
       ],
+      order: [['createdAt', 'DESC']],
     });
     return res.status(200).json(bookings);
   } catch (error) {
@@ -366,8 +367,7 @@ const getDoctorBookings = async (req, res) => {
         { model: Prescription, as: 'prescription' },
       ],
       order: [
-        ['bookingDate', 'DESC'],
-        ['bookingStartTime', 'DESC'],
+        [['createdAt', 'DESC']],
         [{ model: Prescription, as: 'prescription' }, 'createdDate', 'DESC'],
       ],
       distinct: true,
@@ -423,10 +423,7 @@ const getPatientBookings = async (req, res) => {
         { model: Doctor, as: 'doctor', attributes: ['id', 'doctorName'] },
         { model: Prescription, as: 'prescription' },
       ],
-      order: [
-        ['bookingDate', 'DESC'],
-        ['bookingStartTime', 'DESC'],
-      ],
+      order: [['createdAt', 'DESC']],
     });
     return res.status(200).json(bookings);
   } catch (error) {
@@ -451,8 +448,7 @@ const getPatientBookingHistories = async (req, res) => {
         { model: Prescription, as: 'prescription' },
       ],
       order: [
-        ['bookingDate', 'DESC'],
-        ['bookingStartTime', 'DESC'],
+        [['createdAt', 'DESC']],
         [{ model: Prescription, as: 'prescription' }, 'createdDate', 'DESC'],
       ],
       distinct: true,

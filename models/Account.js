@@ -1,8 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
   const Account = sequelize.define('Account', {
-    username: {
+    email: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
     password: {
       type: DataTypes.STRING,
@@ -24,11 +25,6 @@ module.exports = (sequelize, DataTypes) => {
     userAvatar: {
       type: DataTypes.STRING,
       allowNull: true,
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
     },
     resetToken: {
       type: DataTypes.STRING,
