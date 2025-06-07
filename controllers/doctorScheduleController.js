@@ -3,7 +3,7 @@ const { DoctorSchedule, Doctor, Schedule } = require('../models');
 // Create a new doctor schedule (working shift)
 const createDoctorSchedule = async (req, res) => {
   try {
-    const { doctorId, scheduleId, workDate, isConfirmed = false } = req.body;
+    const { doctorId, scheduleId, workDate, isConfirmed = null } = req.body;
     // Prevent duplicate shift for the same doctor, schedule, and date
     const exists = await DoctorSchedule.findOne({
       where: { doctorId, scheduleId, workDate },

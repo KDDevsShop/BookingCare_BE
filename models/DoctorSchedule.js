@@ -16,8 +16,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     isConfirmed: {
       type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
+      allowNull: true,
+      defaultValue: null,
     },
   });
 
