@@ -20,13 +20,8 @@ const createBooking = async (req, res) => {
       bookingReason,
       patientId,
       doctorId,
+      email,
     } = req.body;
-
-    if (new Date(bookingDate) < new Date()) {
-      return res.status(400).json({
-        message: 'Booking date cannot be in the past',
-      });
-    }
 
     if (bookingStartTime >= bookingEndTime) {
       return res
@@ -42,6 +37,18 @@ const createBooking = async (req, res) => {
       !doctorId
     ) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate: must book at least 1 hour before appointment time
+    const bookingDateTime = new Date(`${bookingDate}T${bookingStartTime}`);
+    const now = new Date();
+    const diffMs = bookingDateTime - now;
+    const diffMinutes = diffMs / (1000 * 60);
+
+    if (diffMinutes < 60) {
+      return res.status(400).json({
+        message: 'Bạn chỉ có thể đặt lịch trước giờ hẹn ít nhất 1 tiếng.',
+      });
     }
 
     const doctor = await Doctor.findByPk(doctorId);
@@ -106,7 +113,7 @@ const createBooking = async (req, res) => {
       const confirmUrl = `http://localhost:5173/booking/confirm?bookingId=${newBooking.id}`;
       const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: patient.account.email,
+        to: email || patient.account.email,
         subject: 'Xác nhận đặt lịch khám - BookingCare',
         html: `
           <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #f9f9f9; border-radius: 12px; padding: 32px 24px; box-shadow: 0 2px 8px #e0e0e0;">

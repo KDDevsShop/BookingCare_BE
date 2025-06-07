@@ -6,7 +6,13 @@ const fs = require('fs');
 const getAllPatients = async (req, res) => {
   try {
     const patients = await Patient.findAll({
-      include: [{ model: Account, as: 'account' }],
+      include: [
+        {
+          model: Account,
+          as: 'account',
+          include: [{ model: Patient, as: 'patient' }],
+        },
+      ],
     });
     return res.status(200).json(patients);
   } catch (error) {
@@ -21,7 +27,13 @@ const getPatientById = async (req, res) => {
   try {
     const { id } = req.params;
     const patient = await Patient.findByPk(id, {
-      include: [{ model: Account, as: 'account' }],
+      include: [
+        {
+          model: Account,
+          as: 'account',
+          include: [{ model: Patient, as: 'patient' }],
+        },
+      ],
     });
     if (!patient) return res.status(404).json({ message: 'Patient not found' });
     return res.status(200).json(patient);
@@ -65,7 +77,12 @@ const updatePatient = async (req, res) => {
       }
       await patient.account.save();
     }
-    return res.status(200).json({ message: 'Patient updated', patient });
+    const account = await Account.findByPk(patient.accountId, {
+      include: [{ model: Patient, as: 'patient' }],
+    });
+    return res
+      .status(200)
+      .json({ message: 'Patient updated', patient, account });
   } catch (error) {
     return res.status(500).json({
       message: 'Update patient failed',
@@ -95,12 +112,10 @@ const deletePatient = async (req, res) => {
     await patient.destroy();
     return res.status(200).json({ message: 'Patient deleted' });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: 'Delete patient failed',
-        error: error?.message || error,
-      });
+    return res.status(500).json({
+      message: 'Delete patient failed',
+      error: error?.message || error,
+    });
   }
 };
 

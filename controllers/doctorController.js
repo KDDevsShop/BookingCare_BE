@@ -284,7 +284,10 @@ const updateDoctor = async (req, res) => {
       }
       await doctor.account.save();
     }
-    return res.status(200).json({ message: 'Doctor updated', doctor });
+    const account = await Account.findByPk(doctor.accountId, {
+      include: [{ model: Doctor, as: 'doctor' }],
+    });
+    return res.status(200).json({ message: 'Doctor updated', doctor, account });
   } catch (error) {
     return res
       .status(500)
