@@ -84,6 +84,27 @@ const createBooking = async (req, res) => {
       });
     }
 
+    const conflictedBooking = await Booking.findOne({
+      where: {
+        doctorId,
+        patientId,
+        bookingStatus: { [require('sequelize').Op.ne]: 'Đã hủy' }, // Exclude canceled bookings
+        bookingDate,
+        bookingStartTime: {
+          [require('sequelize').Op.lte]: bookingEndTime,
+        },
+        bookingEndTime: {
+          [require('sequelize').Op.gte]: bookingStartTime,
+        },
+      },
+    });
+
+    if (conflictedBooking) {
+      return res.status(400).json({
+        message: 'Bạn đã có lịch hẹn trùng với thời gian này',
+      });
+    }
+
     const newBooking = await Booking.create({
       bookingDate,
       bookingStartTime,
@@ -290,7 +311,13 @@ const cancelBooking = async (req, res) => {
     if (booking.bookingStatus === 'Đã hủy') {
       return res.status(400).json({ message: 'Booking đã bị hủy trước đó' });
     }
-    // Check if current time is less than 1 hour before appointment
+
+    if (booking.bookingStatus === 'Đã hoàn thành') {
+      return res
+        .status(400)
+        .json({ message: 'Không thể hủy booking đã hoàn thành' });
+    }
+
     const now = new Date();
 
     const bookingDateTime = new Date(
@@ -320,18 +347,6 @@ const cancelBooking = async (req, res) => {
         ds.schedule.startTime === booking.bookingStartTime &&
         ds.schedule.endTime === booking.bookingEndTime
     );
-
-    console.log('==================DEBUG==================');
-
-    console.log('Doctor Schedule:', doctorSchedule);
-    console.log(
-      'Doctor Schedule Start Time:',
-      doctorSchedule?.schedule?.startTime
-    );
-    console.log('Doctor Schedule End Time:', doctorSchedule?.schedule?.endTime);
-    console.log('Booking Start Time:', booking.bookingStartTime);
-    console.log('Booking End Time:', booking.bookingEndTime);
-    console.log('Current Patients:', doctorSchedule?.currentPatients);
 
     if (
       doctorSchedule &&
