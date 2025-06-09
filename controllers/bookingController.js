@@ -86,7 +86,6 @@ const createBooking = async (req, res) => {
 
     const conflictedBooking = await Booking.findOne({
       where: {
-        doctorId,
         patientId,
         bookingStatus: { [require('sequelize').Op.ne]: 'Đã hủy' }, // Exclude canceled bookings
         bookingDate,
