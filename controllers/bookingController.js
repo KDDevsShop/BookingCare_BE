@@ -332,6 +332,8 @@ const cancelBooking = async (req, res) => {
       });
     }
 
+    const oldStatus = booking.bookingStatus;
+
     booking.bookingStatus = 'Đã hủy';
     await booking.save();
 
@@ -353,7 +355,7 @@ const cancelBooking = async (req, res) => {
       doctorSchedule?.schedule.startTime === booking.bookingStartTime &&
       doctorSchedule?.schedule.endTime === booking.bookingEndTime
     ) {
-      if (doctorSchedule.currentPatients > 0) {
+      if (doctorSchedule.currentPatients > 0 && oldStatus !== 'Chờ xác nhận') {
         doctorSchedule.currentPatients -= 1;
 
         if (!doctorSchedule.isAvailable) {
